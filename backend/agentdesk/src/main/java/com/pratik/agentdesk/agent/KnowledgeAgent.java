@@ -2,8 +2,10 @@ package com.pratik.agentdesk.agent;
 
 import com.pratik.agentdesk.ai.service.AiService;
 import com.pratik.agentdesk.chat.entity.ChatMessage;
+import com.pratik.agentdesk.common.PromptBuilder;
 import com.pratik.agentdesk.knowledge.entity.KnowledgeDocument;
 import com.pratik.agentdesk.knowledge.repository.KnowledgeDocumentRepository;
+import com.pratik.agentdesk.knowledge.service.KnowledgeRetriever;
 
 import org.springframework.stereotype.Service;
 
@@ -16,51 +18,18 @@ import lombok.RequiredArgsConstructor;
 public class KnowledgeAgent implements Agent {
     private final AiService aiService;
     private final KnowledgeDocumentRepository knowledgeDocumentRepository;
+    private final PromptBuilder promptBuilder;
+    private final KnowledgeRetriever knowledgeRetriever;
 
     @Override
     public String execute(String userQuestion, List<ChatMessage> chatMessages) {
 
-        List<KnowledgeDocument> knowledgeDocumentList = knowledgeDocumentRepository.findAll();
+        List<KnowledgeDocument> knowledgeDocumentList = knowledgeRetriever.retrive(userQuestion);
 
-        StringBuilder knowledgeContext = new StringBuilder();
-
-        for (KnowledgeDocument doc : knowledgeDocumentList) {
-
-            knowledgeContext.append("Title: ")
-                    .append(doc.getTitle())
-                    .append("\n")
-                    .append(doc.getContent())
-                    .append("\n\n");
-        }
-
-        StringBuilder finalPrompt = new StringBuilder();
-
-        finalPrompt.append("""
-                You are a helpful assistant.
-                
-                Use the knowledge below when answering.
-                
-                Knowledge:
-                
-                """);
-
-        finalPrompt.append(knowledgeContext);
-
-        finalPrompt.append("""
-                
-                Conversation:
-                
-                """);
-
-        for (ChatMessage message : chatMessages) {
-
-            finalPrompt.append(message.getRole())
-                    .append(": ")
-                    .append(message.getContent())
-                    .append("\n");
-        }
-
-
-        return aiService.chat(finalPrompt.toString());
+        String prompt = promptBuilder.buildKnowledgePrompt(knowledgeDocumentList, chatMessages);
+        System.out.println("===== PROMPT =====");
+        System.out.println(prompt);
+        System.out.println("==================");
+        return aiService.chat(prompt);
     }
 }

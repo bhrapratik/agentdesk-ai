@@ -85,7 +85,7 @@ public class ChatService {
         Agent agent = agentFactory.getAgent(agentType);
 
         String answer = agent.execute(request.getMessage(), messages);
-        
+
         // Save assistant response
         ChatMessage assistantMessage =
                 new ChatMessage();

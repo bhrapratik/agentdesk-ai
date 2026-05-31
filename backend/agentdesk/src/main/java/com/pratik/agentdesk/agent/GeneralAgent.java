@@ -2,6 +2,7 @@ package com.pratik.agentdesk.agent;
 
 import com.pratik.agentdesk.ai.service.AiService;
 import com.pratik.agentdesk.chat.entity.ChatMessage;
+import com.pratik.agentdesk.common.PromptBuilder;
 
 import org.springframework.stereotype.Service;
 
@@ -13,25 +14,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class GeneralAgent implements Agent {
     private final AiService aiService;
+    private final PromptBuilder promptBuilder;
 
     @Override
     public String execute(String userQuestion, List<ChatMessage> chatMessages) {
-        StringBuilder finalPrompt = new StringBuilder();
-        finalPrompt.append("""
-                
-                Conversation:
-                
-                """);
 
-        for (ChatMessage message : chatMessages) {
+        String prompt = promptBuilder.buildConversationPrompt(chatMessages);
 
-            finalPrompt.append(message.getRole())
-                    .append(": ")
-                    .append(message.getContent())
-                    .append("\n");
-        }
-
-
-        return aiService.chat(finalPrompt.toString());
+        return aiService.chat(prompt);
     }
 }
