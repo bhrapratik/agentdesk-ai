@@ -8,6 +8,8 @@ import com.pratik.agentdesk.chat.entity.ChatSession;
 import com.pratik.agentdesk.chat.entity.MessageRole;
 import com.pratik.agentdesk.chat.repository.ChatMessageRepository;
 import com.pratik.agentdesk.chat.repository.ChatSessionRepository;
+import com.pratik.agentdesk.knowledge.entity.KnowledgeDocument;
+import com.pratik.agentdesk.knowledge.repository.KnowledgeDocumentRepository;
 import com.pratik.agentdesk.user.entity.User;
 import com.pratik.agentdesk.user.repository.UserRepository;
 
@@ -24,6 +26,7 @@ public class ChatService {
     private final ChatSessionRepository chatSessionRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final AiService aiService;
+    private final KnowledgeDocumentRepository knowledgeDocumentRepository;
 
 
     public ChatResponse chat(ChatRequest request) {
@@ -59,24 +62,48 @@ public class ChatService {
                         .findBySessionIdOrderByIdAsc(
                                 session.getId());
 
-        StringBuilder prompt = new StringBuilder();
+        List<KnowledgeDocument> knowledgeDocumentList = knowledgeDocumentRepository.findAll();
 
-        prompt.append("""
-            You are a helpful AI assistant.
-            Use the conversation history below.
+        StringBuilder knowledgeContext = new StringBuilder();
 
-            """);
+        for (KnowledgeDocument doc : knowledgeDocumentList) {
+
+            knowledgeContext.append("Title: ")
+                    .append(doc.getTitle())
+                    .append("\n")
+                    .append(doc.getContent())
+                    .append("\n\n");
+        }
+
+        StringBuilder finalPrompt = new StringBuilder();
+
+        finalPrompt.append("""
+                You are a helpful assistant.
+                
+                Use the knowledge below when answering.
+                
+                Knowledge:
+                
+                """);
+
+        finalPrompt.append(knowledgeContext);
+
+        finalPrompt.append("""
+                
+                Conversation:
+                
+                """);
 
         for (ChatMessage message : messages) {
 
-            prompt.append(message.getRole())
+            finalPrompt.append(message.getRole())
                     .append(": ")
                     .append(message.getContent())
                     .append("\n");
         }
 
         String answer =
-                aiService.chat(prompt.toString());
+                aiService.chat(finalPrompt.toString());
 
         // Save assistant response
         ChatMessage assistantMessage =
