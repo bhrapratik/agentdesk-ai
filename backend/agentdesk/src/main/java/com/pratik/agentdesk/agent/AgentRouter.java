@@ -10,7 +10,8 @@ public class AgentRouter {
         String lower = question.toLowerCase();
         if (lower.contains("vpn")
                 || lower.contains("guide")
-                || lower.contains("policy")) {
+                || lower.contains("policy")
+                || lower.contains("network")) {
             return AgentType.KNOWLEDGE;
         }
         return AgentType.GENERAL;

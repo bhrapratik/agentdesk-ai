@@ -1,6 +1,9 @@
 package com.pratik.agentdesk.chat.service;
 
-import com.pratik.agentdesk.ai.service.AiService;
+import com.pratik.agentdesk.agent.AgentRouter;
+import com.pratik.agentdesk.agent.AgentType;
+import com.pratik.agentdesk.agent.GeneralAgent;
+import com.pratik.agentdesk.agent.KnowledgeAgent;
 import com.pratik.agentdesk.chat.dto.ChatRequest;
 import com.pratik.agentdesk.chat.dto.ChatResponse;
 import com.pratik.agentdesk.chat.entity.ChatMessage;
@@ -8,11 +11,11 @@ import com.pratik.agentdesk.chat.entity.ChatSession;
 import com.pratik.agentdesk.chat.entity.MessageRole;
 import com.pratik.agentdesk.chat.repository.ChatMessageRepository;
 import com.pratik.agentdesk.chat.repository.ChatSessionRepository;
-import com.pratik.agentdesk.knowledge.entity.KnowledgeDocument;
-import com.pratik.agentdesk.knowledge.repository.KnowledgeDocumentRepository;
 import com.pratik.agentdesk.user.entity.User;
 import com.pratik.agentdesk.user.repository.UserRepository;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,11 +25,17 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class ChatService {
+    private static final Logger log =
+            LoggerFactory.getLogger(ChatService.class);
+
     private final UserRepository userRepository;
     private final ChatSessionRepository chatSessionRepository;
     private final ChatMessageRepository chatMessageRepository;
-    private final AiService aiService;
-    private final KnowledgeDocumentRepository knowledgeDocumentRepository;
+
+
+    private final AgentRouter agentRouter;
+    private final GeneralAgent generalAgent;
+    private final KnowledgeAgent knowledgeAgent;
 
 
     public ChatResponse chat(ChatRequest request) {
@@ -62,48 +71,18 @@ public class ChatService {
                         .findBySessionIdOrderByIdAsc(
                                 session.getId());
 
-        List<KnowledgeDocument> knowledgeDocumentList = knowledgeDocumentRepository.findAll();
+        String answer;
 
-        StringBuilder knowledgeContext = new StringBuilder();
+        AgentType agentType =
+                agentRouter.route(
+                        request.getMessage());
+        log.info("Agent selected: {}", agentType);
+        if (agentType == AgentType.KNOWLEDGE) {
+            answer = knowledgeAgent.execute(request.getMessage(), messages);
 
-        for (KnowledgeDocument doc : knowledgeDocumentList) {
-
-            knowledgeContext.append("Title: ")
-                    .append(doc.getTitle())
-                    .append("\n")
-                    .append(doc.getContent())
-                    .append("\n\n");
+        } else {
+            answer = generalAgent.execute(request.getMessage(), messages);
         }
-
-        StringBuilder finalPrompt = new StringBuilder();
-
-        finalPrompt.append("""
-                You are a helpful assistant.
-                
-                Use the knowledge below when answering.
-                
-                Knowledge:
-                
-                """);
-
-        finalPrompt.append(knowledgeContext);
-
-        finalPrompt.append("""
-                
-                Conversation:
-                
-                """);
-
-        for (ChatMessage message : messages) {
-
-            finalPrompt.append(message.getRole())
-                    .append(": ")
-                    .append(message.getContent())
-                    .append("\n");
-        }
-
-        String answer =
-                aiService.chat(finalPrompt.toString());
 
         // Save assistant response
         ChatMessage assistantMessage =
