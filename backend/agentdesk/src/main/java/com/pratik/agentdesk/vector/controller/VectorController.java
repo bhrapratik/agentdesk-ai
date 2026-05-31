@@ -1,6 +1,8 @@
 package com.pratik.agentdesk.vector.controller;
 
+import com.pratik.agentdesk.knowledge.entity.KnowledgeDocument;
 import com.pratik.agentdesk.vector.service.EmbeddingService;
+import com.pratik.agentdesk.vector.service.VectorSearchService;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,13 +17,17 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/vector")
 @RequiredArgsConstructor
 public class VectorController {
-    private final EmbeddingService embeddingService;
+    private final VectorSearchService vectorSearchService;
 
-    @GetMapping
-    public List<Double> test(
-            @RequestParam String text) {
+    @GetMapping("/search")
+    public String search(
+            @RequestParam String query) {
 
-        return embeddingService
-                .generateEmbedding(text);
+        try {
+            KnowledgeDocument doc = vectorSearchService.search(query);
+            return doc.getTitle();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

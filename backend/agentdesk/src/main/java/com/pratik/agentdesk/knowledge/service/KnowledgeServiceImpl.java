@@ -5,6 +5,7 @@ import com.pratik.agentdesk.knowledge.dto.KnowledgeRequest;
 import com.pratik.agentdesk.knowledge.dto.KnowledgeResponse;
 import com.pratik.agentdesk.knowledge.entity.KnowledgeDocument;
 import com.pratik.agentdesk.knowledge.repository.KnowledgeDocumentRepository;
+import com.pratik.agentdesk.vector.service.EmbeddingService;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,12 +14,15 @@ import java.io.IOException;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
+import tools.jackson.databind.ObjectMapper;
 
 @Service
 @RequiredArgsConstructor
 public class KnowledgeServiceImpl implements KnowledgeService {
 
     private final KnowledgeDocumentRepository knowledgeDocumentRepository;
+    private final EmbeddingService embeddingService;
+    private final ObjectMapper objectMapper;
 
     @Override
     public KnowledgeResponse create(KnowledgeRequest request) {
@@ -29,10 +33,7 @@ public class KnowledgeServiceImpl implements KnowledgeService {
 
         document = knowledgeDocumentRepository.save(document);
 
-        return new KnowledgeResponse(
-                document.getId(),
-                document.getTitle(),
-                document.getCategory());
+        return new KnowledgeResponse(document.getId(), document.getTitle(), document.getCategory());
     }
 
     @Override
@@ -45,33 +46,26 @@ public class KnowledgeServiceImpl implements KnowledgeService {
 
         try {
 
-            String content =
-                    new String(
-                            file.getBytes());
+            String content = new String(file.getBytes());
 
-            KnowledgeDocument document =
-                    new KnowledgeDocument();
+            KnowledgeDocument document = new KnowledgeDocument();
 
-            document.setTitle(
-                    file.getOriginalFilename());
+            document.setTitle(file.getOriginalFilename());
 
             document.setCategory("UPLOADED");
 
             document.setContent(content);
 
-            document =
-                    knowledgeDocumentRepository.save(document);
+            List<Double> embedding = embeddingService.generateEmbedding(content);
+            document.setEmbedding(objectMapper.writeValueAsString(embedding));
 
-            return new KnowledgeResponse(
-                    document.getId(),
-                    document.getTitle(),
-                    document.getCategory());
+            document = knowledgeDocumentRepository.save(document);
+
+            return new KnowledgeResponse(document.getId(), document.getTitle(), document.getCategory());
 
         } catch (IOException e) {
 
-            throw new RuntimeException(
-                    "Failed to upload file",
-                    e);
+            throw new RuntimeException("Failed to upload file", e);
         }
     }
 }

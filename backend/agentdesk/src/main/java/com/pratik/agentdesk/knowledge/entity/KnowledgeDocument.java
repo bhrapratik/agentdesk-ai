@@ -26,4 +26,7 @@ public class KnowledgeDocument extends BaseEntity {
     private String content;
 
     private String category;
+
+    @Column(columnDefinition = "TEXT")
+    private String embedding;
 }
