@@ -1,9 +1,12 @@
 package com.pratik.agentdesk.chat.service;
 
+import com.pratik.agentdesk.agent.Agent;
+import com.pratik.agentdesk.agent.AgentFactory;
 import com.pratik.agentdesk.agent.AgentRouter;
 import com.pratik.agentdesk.agent.AgentType;
 import com.pratik.agentdesk.agent.GeneralAgent;
 import com.pratik.agentdesk.agent.KnowledgeAgent;
+import com.pratik.agentdesk.agent.TicketAgent;
 import com.pratik.agentdesk.chat.dto.ChatRequest;
 import com.pratik.agentdesk.chat.dto.ChatResponse;
 import com.pratik.agentdesk.chat.entity.ChatMessage;
@@ -36,6 +39,8 @@ public class ChatService {
     private final AgentRouter agentRouter;
     private final GeneralAgent generalAgent;
     private final KnowledgeAgent knowledgeAgent;
+    private final TicketAgent ticketAgent;
+    private final AgentFactory agentFactory;
 
 
     public ChatResponse chat(ChatRequest request) {
@@ -71,19 +76,16 @@ public class ChatService {
                         .findBySessionIdOrderByIdAsc(
                                 session.getId());
 
-        String answer;
 
         AgentType agentType =
                 agentRouter.route(
                         request.getMessage());
         log.info("Agent selected: {}", agentType);
-        if (agentType == AgentType.KNOWLEDGE) {
-            answer = knowledgeAgent.execute(request.getMessage(), messages);
 
-        } else {
-            answer = generalAgent.execute(request.getMessage(), messages);
-        }
+        Agent agent = agentFactory.getAgent(agentType);
 
+        String answer = agent.execute(request.getMessage(), messages);
+        
         // Save assistant response
         ChatMessage assistantMessage =
                 new ChatMessage();

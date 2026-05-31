@@ -6,6 +6,13 @@ import org.springframework.stereotype.Service;
 public class AgentRouter {
     public AgentType route(String question) {
         String lower = question.toLowerCase();
+        if (lower.contains("ticket")
+                || lower.contains("issue")
+                || lower.contains("incident")) {
+
+            return AgentType.TICKET;
+        }
+
         if (lower.contains("vpn")
                 || lower.contains("guide")
                 || lower.contains("policy")
