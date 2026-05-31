@@ -20,14 +20,10 @@ public class VectorController {
     private final VectorSearchService vectorSearchService;
 
     @GetMapping("/search")
-    public String search(
-            @RequestParam String query) {
+    public KnowledgeDocument search(
+            @RequestParam String query)
+            throws Exception {
 
-        try {
-            KnowledgeDocument doc = vectorSearchService.search(query);
-            return doc.getTitle();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return vectorSearchService.search(query);
     }
 }

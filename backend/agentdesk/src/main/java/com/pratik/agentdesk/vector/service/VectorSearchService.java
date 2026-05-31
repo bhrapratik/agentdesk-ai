@@ -2,8 +2,11 @@ package com.pratik.agentdesk.vector.service;
 
 import com.pratik.agentdesk.knowledge.entity.KnowledgeDocument;
 import com.pratik.agentdesk.knowledge.repository.KnowledgeDocumentRepository;
+import com.pratik.agentdesk.knowledge.service.KnowledgeRetriever;
 import com.pratik.agentdesk.vector.CosineSimilarityUtil;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,9 +18,13 @@ import tools.jackson.databind.ObjectMapper;
 @Service
 @RequiredArgsConstructor
 public class VectorSearchService {
+
     private final EmbeddingService embeddingService;
     private final KnowledgeDocumentRepository repository;
     private final ObjectMapper objectMapper;
+
+    private static final Logger log = LoggerFactory.getLogger(VectorSearchService.class);
+
     public KnowledgeDocument search(
             String query) throws Exception {
 
@@ -25,31 +32,41 @@ public class VectorSearchService {
                 embeddingService.generateEmbedding(query);
 
         double bestScore = -1;
-        KnowledgeDocument bestDoc = null;
+        KnowledgeDocument bestDocument = null;
 
-        for (KnowledgeDocument doc : repository.findAll()) {
+        List<KnowledgeDocument> documents =
+                repository.findAll();
 
-            if (doc.getEmbedding() == null) {
+        for (KnowledgeDocument document : documents) {
+
+            if (document.getEmbedding() == null) {
                 continue;
             }
 
-            List<Double> docEmbedding =
+            List<Double> documentEmbedding =
                     objectMapper.readValue(
-                            doc.getEmbedding(),
-                            new TypeReference<>() {});
+                            document.getEmbedding(),
+                            new TypeReference<List<Double>>() {
+                            });
 
             double score =
                     CosineSimilarityUtil
                             .cosineSimilarity(
                                     queryEmbedding,
-                                    docEmbedding);
+                                    documentEmbedding);
+
+            log.info(
+                    "Document: {} Score: {}",
+                    document.getTitle(),
+                    score);
 
             if (score > bestScore) {
+
                 bestScore = score;
-                bestDoc = doc;
+                bestDocument = document;
             }
         }
 
-        return bestDoc;
+        return bestDocument;
     }
 }
