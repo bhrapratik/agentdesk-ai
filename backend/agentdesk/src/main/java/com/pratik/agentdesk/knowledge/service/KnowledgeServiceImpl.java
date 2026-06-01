@@ -5,8 +5,11 @@ import com.pratik.agentdesk.knowledge.dto.KnowledgeRequest;
 import com.pratik.agentdesk.knowledge.dto.KnowledgeResponse;
 import com.pratik.agentdesk.knowledge.entity.KnowledgeDocument;
 import com.pratik.agentdesk.knowledge.repository.KnowledgeDocumentRepository;
+import com.pratik.agentdesk.vector.VectorFormatter;
 import com.pratik.agentdesk.vector.service.EmbeddingService;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,9 +23,12 @@ import tools.jackson.databind.ObjectMapper;
 @RequiredArgsConstructor
 public class KnowledgeServiceImpl implements KnowledgeService {
 
+    private static final Logger log = LoggerFactory.getLogger(KnowledgeServiceImpl.class);
+
     private final KnowledgeDocumentRepository knowledgeDocumentRepository;
     private final EmbeddingService embeddingService;
     private final ObjectMapper objectMapper;
+    private final VectorFormatter vectorFormatter;
 
     @Override
     public KnowledgeResponse create(KnowledgeRequest request) {
@@ -57,9 +63,19 @@ public class KnowledgeServiceImpl implements KnowledgeService {
             document.setContent(content);
 
             List<Double> embedding = embeddingService.generateEmbedding(content);
+
+            String pgVector =
+                    vectorFormatter
+                            .toPgVector(embedding);
+
             document.setEmbedding(objectMapper.writeValueAsString(embedding));
 
             document = knowledgeDocumentRepository.save(document);
+
+            knowledgeDocumentRepository
+                    .updateEmbeddingVector(
+                            document.getId(),
+                            pgVector);
 
             return new KnowledgeResponse(document.getId(), document.getTitle(), document.getCategory());
 
@@ -67,5 +83,10 @@ public class KnowledgeServiceImpl implements KnowledgeService {
 
             throw new RuntimeException("Failed to upload file", e);
         }
+    }
+
+    @Override
+    public void delete(Long id) {
+        knowledgeDocumentRepository.deleteById(id);
     }
 }

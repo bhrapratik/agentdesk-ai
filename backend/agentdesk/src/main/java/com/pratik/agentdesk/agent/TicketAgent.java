@@ -16,7 +16,7 @@ public class TicketAgent implements Agent {
     private final SupportTicketRepository supportTicketRepository;
 
     @Override
-    public String execute(String userQuestion, List<ChatMessage> chatMessages) {
+    public AgentResponse execute(String userQuestion, List<ChatMessage> chatMessages) {
         SupportTicket ticket =
                 new SupportTicket();
 
@@ -26,6 +26,11 @@ public class TicketAgent implements Agent {
 
         ticket = supportTicketRepository.save(ticket);
 
+        return new AgentResponse(formatResponse(ticket), List.of());
+
+    }
+
+    private String formatResponse(SupportTicket ticket) {
         return """
                 Ticket created successfully.
                 

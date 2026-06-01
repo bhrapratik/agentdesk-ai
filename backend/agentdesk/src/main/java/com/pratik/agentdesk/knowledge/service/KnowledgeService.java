@@ -16,4 +16,6 @@ public interface KnowledgeService {
     List<KnowledgeDocument> getAll();
 
     KnowledgeResponse upload(MultipartFile file);
+
+    void delete(Long id);
 }

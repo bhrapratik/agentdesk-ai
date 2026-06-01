@@ -3,6 +3,7 @@ package com.pratik.agentdesk.knowledge.service;
 import com.pratik.agentdesk.chat.service.ChatService;
 import com.pratik.agentdesk.knowledge.entity.KnowledgeDocument;
 import com.pratik.agentdesk.knowledge.repository.KnowledgeDocumentRepository;
+import com.pratik.agentdesk.vector.service.VectorSearchService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,23 +18,9 @@ import lombok.RequiredArgsConstructor;
 public class KnowledgeRetriever {
     private static final Logger log = LoggerFactory.getLogger(KnowledgeRetriever.class);
     private final KnowledgeDocumentRepository knowledgeDocumentRepository;
+    private final VectorSearchService vectorSearchService;
 
     public List<KnowledgeDocument> retrive(String question) {
-        if (question.toLowerCase().contains("vpn")) {
-            log.info("vpn specific: {}", question.toLowerCase());
-            return knowledgeDocumentRepository
-                    .findByTitleContainingIgnoreCaseOrContentContainingIgnoreCase(
-                            "vpn",
-                            "vpn");
-        }
-        if (question.contains("password")) {
-
-            log.info("password specific: {}", question.toLowerCase());
-            return knowledgeDocumentRepository
-                    .findByTitleContainingIgnoreCaseOrContentContainingIgnoreCase(
-                            "password",
-                            "password");
-        }
-        return knowledgeDocumentRepository.findAll();
+       return vectorSearchService.search(question);
     }
 }

@@ -2,6 +2,7 @@ package com.pratik.agentdesk.chat.service;
 
 import com.pratik.agentdesk.agent.Agent;
 import com.pratik.agentdesk.agent.AgentFactory;
+import com.pratik.agentdesk.agent.AgentResponse;
 import com.pratik.agentdesk.agent.AgentRouter;
 import com.pratik.agentdesk.agent.AgentType;
 import com.pratik.agentdesk.agent.GeneralAgent;
@@ -84,7 +85,7 @@ public class ChatService {
 
         Agent agent = agentFactory.getAgent(agentType);
 
-        String answer = agent.execute(request.getMessage(), messages);
+        AgentResponse result = agent.execute(request.getMessage(), messages);
 
         // Save assistant response
         ChatMessage assistantMessage =
@@ -92,7 +93,7 @@ public class ChatService {
 
         assistantMessage.setSession(session);
         assistantMessage.setRole(MessageRole.ASSISTANT);
-        assistantMessage.setContent(answer);
+        assistantMessage.setContent(result.answer());
 
         chatMessageRepository.save(assistantMessage);
 
@@ -100,9 +101,10 @@ public class ChatService {
         ChatResponse response =
                 new ChatResponse();
 
-        response.setResponse(answer);
+        response.setResponse(result.answer());
         response.setSessionId(
                 session.getId());
+        response.setSources(result.sources());
 
         return response;
     }

@@ -20,7 +20,7 @@ public class VectorController {
     private final VectorSearchService vectorSearchService;
 
     @GetMapping("/search")
-    public KnowledgeDocument search(
+    public List<KnowledgeDocument> search(
             @RequestParam String query)
             throws Exception {
 

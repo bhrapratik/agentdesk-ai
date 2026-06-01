@@ -1,4 +1,8 @@
 package com.pratik.agentdesk.agent;
 
-public class AgentResponse {
+import java.util.List;
+
+public record AgentResponse(
+        String answer,
+        List<String> sources) {
 }

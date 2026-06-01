@@ -17,10 +17,10 @@ public class GeneralAgent implements Agent {
     private final PromptBuilder promptBuilder;
 
     @Override
-    public String execute(String userQuestion, List<ChatMessage> chatMessages) {
+    public AgentResponse execute(String userQuestion, List<ChatMessage> chatMessages) {
 
         String prompt = promptBuilder.buildConversationPrompt(chatMessages);
 
-        return aiService.chat(prompt);
+        return new AgentResponse(aiService.chat(prompt), List.of());
     }
 }

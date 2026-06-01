@@ -7,6 +7,8 @@ import com.pratik.agentdesk.knowledge.entity.KnowledgeDocument;
 import com.pratik.agentdesk.knowledge.repository.KnowledgeDocumentRepository;
 import com.pratik.agentdesk.knowledge.service.KnowledgeRetriever;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,16 +22,29 @@ public class KnowledgeAgent implements Agent {
     private final KnowledgeDocumentRepository knowledgeDocumentRepository;
     private final PromptBuilder promptBuilder;
     private final KnowledgeRetriever knowledgeRetriever;
+    private static final Logger log = LoggerFactory.getLogger(KnowledgeAgent.class);
 
     @Override
-    public String execute(String userQuestion, List<ChatMessage> chatMessages) {
+    public AgentResponse execute(String userQuestion, List<ChatMessage> chatMessages) {
 
         List<KnowledgeDocument> knowledgeDocumentList = knowledgeRetriever.retrive(userQuestion);
 
+        knowledgeDocumentList.forEach(doc ->
+                log.info(
+                        "Using document: {}",
+                        doc.getTitle()));
         String prompt = promptBuilder.buildKnowledgePrompt(knowledgeDocumentList, chatMessages);
         System.out.println("===== PROMPT =====");
         System.out.println(prompt);
         System.out.println("==================");
-        return aiService.chat(prompt);
+        if (knowledgeDocumentList.isEmpty()) {
+
+            log.info(
+                    "No knowledge documents found, falling back to GeneralAgent");
+            return new AgentResponse(aiService.chat(userQuestion), null);
+        }
+        return new AgentResponse(aiService.chat(prompt), knowledgeDocumentList.stream()
+                .map(KnowledgeDocument::getTitle)
+                .toList());
     }
 }

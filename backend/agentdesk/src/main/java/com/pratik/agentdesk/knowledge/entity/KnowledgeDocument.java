@@ -9,6 +9,13 @@ import jakarta.persistence.Id;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import com.pgvector.PGvector;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+import org.springframework.data.repository.query.Param;
+
+import java.sql.Types;
 
 @Entity
 @Table(name = "knowledge_document")
