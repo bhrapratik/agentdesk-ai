@@ -9,6 +9,7 @@ AgentDesk demonstrates how Retrieval-Augmented Generation (RAG), vector search, 
 # Screenshot
 
 ![AgentDesk](docs/screenshots/agentdesk-home.png)
+![AgentDesk](docs/screenshots/agentdesk-home_2.png)
 
 ---
 
